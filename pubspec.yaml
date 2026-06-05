@@ -1,0 +1,49 @@
+name: securia
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  firebase_auth: ^5.6.2
+  firebase_core: ^3.15.1
+  provider: ^6.1.5
+  easy_url_launcher: ^0.0.7
+  cloud_firestore: ^5.6.11
+  
+  http: ^1.4.0
+  flutter_launcher_icons: ^0.13.1
+  url_launcher: ^6.3.2
+  animated_notch_bottom_bar: ^1.0.3
+  webview_flutter: ^4.8.0
+  connectivity_plus: ^7.0.0
+  sqflite: ^2.4.0
+  path: ^1.9.0
+  image_picker: ^1.2.2
+  file_picker: ^11.0.2
+  
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+    # Package pour générer les icônes de l'application
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo_police.jpg"  # Chemin vers l'image de l'icône principale
+  adaptive_icon_background: "#FFFFFF"  # Couleur de fond pour l'icône adaptative Android
+  adaptive_icon_foreground: "assets/images/logo_police.jpg"  # Image pour le premier plan de l'icône adaptative
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/  # Dossier contenant les images
+    - assets/data/annuaire.json    # Dossier contenant les données

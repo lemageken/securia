@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "635447619180",
+    "project_id": "securia-c189a",
+    "storage_bucket": "securia-c189a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635447619180:android:342ab68444e27fe13bb249",
+        "android_client_info": {
+          "package_name": "com.example.securia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAJzivkW8LZ4SSjGMRbqXK8fGkocLuZbY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
