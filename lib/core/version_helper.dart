@@ -8,7 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 /// via Firebase Firestore et redirige vers le téléchargement de l'APK.
 class VersionHelper {
   // Version installée actuellement sur le téléphone du policier
-  static const String currentVersion = "1.0.0";
+  static const String currentVersion = "1.1.0";
 
   // Stockage en mémoire de la clé API Gemini récupérée dynamiquement
   static String geminiApiKey = "";
