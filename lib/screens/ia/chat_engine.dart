@@ -10,9 +10,9 @@ import 'package:securia/core/version_helper.dart';
 class ChatEngine {
   // URL de base du modèle gemini-2.5-flash (la clé d'API sera injectée dynamiquement)
   static const String _apiBaseUrl =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-  // Clé API de secours si Firestore n'est pas configuré
-  static const String _fallbackApiKey = "AIzaSyAJOym-VqGU55EKzoV-ErGcDl3Rhv8snZA";
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+  // Clé API de secours optionnelle (la clé officielle est chargée dynamiquement depuis Firestore)
+  static const String _fallbackApiKey = "";
 
   // Prompt système fixe pour définir Pocam237 (inchangé – rôle policier camerounais)
   static const String _systemPrompt = """
