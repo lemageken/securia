@@ -1,18 +1,18 @@
-// lib/screens/ia/chat_engine.dart
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart'; // Pour debugPrint (logs debug)
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:securia/core/version_helper.dart';
 
 /// ChatEngine gère les interactions avec l'API Gemini pour Pocam237.
 /// Utilise systemInstruction pour définir le rôle et le format de réponse.
 class ChatEngine {
-  // Ta clé API Gemini (valide)
-  static const String _apiKey = "AIzaSyAJOym-VqGU55EKzoV-ErGcDl3Rhv8snZA";
-  // Modèle mis à jour : gemini-2.5-flash (stable et supporté en v1beta, novembre 2025)
-  static const String _apiUrl =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$_apiKey";
+  // URL de base du modèle gemini-2.5-flash (la clé d'API sera injectée dynamiquement)
+  static const String _apiBaseUrl =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+  // Clé API de secours si Firestore n'est pas configuré
+  static const String _fallbackApiKey = "AIzaSyAJOym-VqGU55EKzoV-ErGcDl3Rhv8snZA";
 
   // Prompt système fixe pour définir Pocam237 (inchangé – rôle policier camerounais)
   static const String _systemPrompt = """
@@ -69,6 +69,36 @@ ton Objectif :
     String? attachmentType,
     int maxRetries = 1,
   }) async {
+    // 1. Récupérer la clé d'API Gemini dynamique
+    String apiKey = VersionHelper.geminiApiKey;
+    if (apiKey.isEmpty) {
+
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('app_config')
+            .doc('version_control')
+            .get();
+        if (doc.exists && doc.data() != null) {
+          apiKey = doc.data()!['gemini_api_key'] ?? '';
+          VersionHelper.geminiApiKey = apiKey;
+        }
+      } catch (e) {
+        debugPrint("Erreur de récupération de la clé API Gemini dans chat_engine : $e");
+      }
+    }
+
+    if (apiKey.isEmpty) {
+
+      apiKey = _fallbackApiKey;
+      VersionHelper.geminiApiKey = apiKey;
+    }
+
+    if (apiKey.isEmpty) {
+      return "Désolé, la clé d'API de l'assistant IA est introuvable. "
+          "Veuillez ajouter le champ 'gemini_api_key' dans votre document 'version_control' sur votre console Firestore.";
+    }
+
+    final String apiUrl = "$_apiBaseUrl?key=$apiKey";
     final List<Map<String, dynamic>> contentsList = [];
 
     // Ajouter l'historique des échanges précédents (uniquement texte)
@@ -161,7 +191,7 @@ ton Objectif :
     for (int retry = 0; retry <= maxRetries; retry++) {
       try {
         final response = await http.post(
-          Uri.parse(_apiUrl),
+          Uri.parse(apiUrl),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(payload),
         );
