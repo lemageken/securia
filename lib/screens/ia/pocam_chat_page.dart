@@ -62,8 +62,9 @@ class _PocamChatPageState extends State<PocamChatPage>
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   bool _isOffline = false;
 
-  // Suggestions rapides pour le démarrage
-  final List<Map<String, String>> _quickSuggestions = [
+  // --- BANQUE ÉTENDUE DE CAS PRATIQUES ET PROCÉDURES POLICIÈRES (CAMEROUN) ---
+  // Ces propositions varient dynamiquement et sont renouvelées à chaque conversation
+  final List<Map<String, String>> _suggestionPool = [
     {
       'title': 'Garde à vue & Prolongation',
       'query': 'Quelles sont les durées légales de la garde à vue au Cameroun et la procédure de prolongation selon le Code de Procédure Pénale ?',
@@ -85,23 +86,95 @@ class _PocamChatPageState extends State<PocamChatPage>
       'icon': '📝',
     },
     {
-      'title': 'Usage légitime de la force',
+      'title': 'Usage légitime de la force & armes',
       'query': 'Quelles sont les conditions strictes de l\'usage légitime de la force et des armes à feu par un fonctionnaire de police en service ?',
       'icon': '🛡️',
     },
     {
-      'title': 'Contrôle routier & Saisie',
+      'title': 'Contrôle routier & Rétention de pièces',
       'query': 'Quelles sont les règles de procédure pour la rétention ou la saisie de pièces d\'un véhicule lors d\'un contrôle de sécurité routière ?',
       'icon': '🚗',
     },
+    {
+      'title': 'Contrôle d\'identité sur la voie publique',
+      'query': 'Dans quelles circonstances légales un agent peut-il procéder à un contrôle d\'identité et quelle est la procédure en cas de défaut de CNI ?',
+      'icon': '👤',
+    },
+    {
+      'title': 'Arnaque Mobile Money & Cybercriminalité',
+      'query': 'Quelle est la qualification pénale et la procédure d\'enquête préliminaire face à une plainte pour escroquerie via Mobile Money au Cameroun ?',
+      'icon': '📱',
+    },
+    {
+      'title': 'Violences conjugales & Urgence',
+      'query': 'Quelle est la conduite à tenir et la procédure d\'urgence pour l\'accueil et la prise en charge d\'une victime de violences conjugales au commissariat ?',
+      'icon': '🏠',
+    },
+    {
+      'title': 'Audition et protection des mineurs',
+      'query': 'Quelles sont les règles spécifiques du Code de Procédure Pénale pour l\'audition et la garde à vue d\'un mineur délinquant ou victime ?',
+      'icon': '👶',
+    },
+    {
+      'title': 'Outrage et rébellion envers la police',
+      'query': 'Quelles sont les sanctions prévues par le Code Pénal camerounais pour outrage, rébellion ou refus d\'obtempérer face aux fonctionnaires de police ?',
+      'icon': '🛑',
+    },
+    {
+      'title': 'Exécution d\'un mandat d\'arrêt',
+      'query': 'Quelle est la différence procédurale entre un mandat de comparution, d\'amener et d\'arrêt, et comment s\'exécute un mandat d\'arrêt sur le terrain ?',
+      'icon': '📜',
+    },
+    {
+      'title': 'Gestion et conservation des scellés',
+      'query': 'Quelles sont les obligations légales de l\'OPJ pour la mise sous scellés, l\'inventaire et la garde des pièces à conviction ?',
+      'icon': '📦',
+    },
+    {
+      'title': 'Droits du suspect & Présence d\'avocat',
+      'query': 'À quel moment précis le suspect en garde à vue a-t-il le droit d\'entrer en contact avec son avocat et un membre de sa famille ?',
+      'icon': '⚖️',
+    },
+    {
+      'title': 'Sommations réglementaires & Attroupement',
+      'query': 'Quelle est la formule exacte et la procédure légale des sommations réglementaires avant la dispersion d\'une manifestation ou d\'un attroupement ?',
+      'icon': '📢',
+    },
+    {
+      'title': 'Mesures conservatoires sur scène de crime',
+      'query': 'Quelles sont les mesures conservatoires urgentes que le premier fonctionnaire de police arrivé sur les lieux d\'un crime doit impérativement prendre ?',
+      'icon': '🕵️',
+    },
+    {
+      'title': 'Saisie conservatoire de biens',
+      'query': 'Dans quelles conditions un OPJ peut-il procéder à la saisie conservatoire d\'objets, véhicules ou fonds suspectés de provenir d\'un délit ?',
+      'icon': '📑',
+    },
+    {
+      'title': 'Dénonciation calomnieuse (Art. 304 CP)',
+      'query': 'Quels sont les éléments constitutifs du délit de dénonciation calomnieuse selon l\'article 304 du Code Pénal et les recours possibles ?',
+      'icon': '⚠️',
+    },
   ];
+
+  // Suggestions actuellement affichées (sélectionnées aléatoirement)
+  List<Map<String, String>> _displayedSuggestions = [];
 
   @override
   void initState() {
     super.initState();
+    _refreshSuggestions();
     _initChatSession();
     _initConnectivity();
     _convSearchController.addListener(_filterConversations);
+  }
+
+  /// Renouvelle aléatoirement les suggestions affichées à partir du vivier complet
+  void _refreshSuggestions() {
+    final shuffled = List<Map<String, String>>.from(_suggestionPool)..shuffle();
+    setState(() {
+      _displayedSuggestions = shuffled.take(5).toList();
+    });
   }
 
   void _filterConversations() {
@@ -199,6 +272,10 @@ class _PocamChatPageState extends State<PocamChatPage>
             )));
         _isLoading = false;
       });
+      // Renouveler les suggestions si la conversation sélectionnée est encore vide
+      if (msgList.isEmpty) {
+        _refreshSuggestions();
+      }
       _scrollToBottom();
     } catch (e) {
       debugPrint('Error loading messages: $e');
@@ -210,10 +287,11 @@ class _PocamChatPageState extends State<PocamChatPage>
     }
   }
 
-  /// Crée un tout nouveau fil de discussion et bascule dessus.
+  /// Crée un tout nouveau fil de discussion et bascule dessus en renouvelant les suggestions.
   Future<void> _startNewConversation() async {
     try {
       final newId = await _dbHelper.createConversation("Nouvelle discussion");
+      _refreshSuggestions(); // Nouvelles propositions variées pour ce nouveau chat
       await _loadConversations();
       await _selectConversation(newId);
     } catch (e) {
@@ -551,11 +629,11 @@ class _PocamChatPageState extends State<PocamChatPage>
     }
   }
 
-  /// Construit la section d'accueil avec les suggestions rapides si la discussion est vide.
+  /// Construit la section d'accueil avec suggestions dynamiques et variables
   Widget _buildEmptyStateWithSuggestions() {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -577,61 +655,107 @@ class _PocamChatPageState extends State<PocamChatPage>
                 ],
               ),
               child: const CircleAvatar(
-                radius: 46,
+                radius: 42,
                 backgroundColor: Colors.white,
                 backgroundImage: AssetImage('assets/images/Pocam.jpg'),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             const Text(
               'Pocam237 • Assistant Police',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 19,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primaryDark,
                 letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
-              'Intelligence Artificielle Juridique & Opérationnelle DGSN',
+              'Intelligence Artificielle Juridique & Procédurale DGSN',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 14),
+            // Bannière explicative : ce ne sont que des suggestions indicatives
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF), // Bleu très clair
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.lightbulb_outline_rounded, size: 18, color: Color(0xFF1E40AF)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Propositions indicatives renouvelées à chaque session. Vous restez 100% libre de poser n'importe quelle question.",
+                      style: TextStyle(fontSize: 11.5, color: Color(0xFF1E3A8A), height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // En-tête des suggestions avec bouton de rafraîchissement
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(Icons.bolt_rounded, color: Colors.amber.shade700, size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'Cas pratiques & requêtes courantes :',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryDark,
+                Row(
+                  children: [
+                    Icon(Icons.bolt_rounded, color: Colors.amber.shade700, size: 18),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Suggestions pratiques :',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+                TextButton.icon(
+                  onPressed: _refreshSuggestions,
+                  icon: const Icon(Icons.refresh_rounded, size: 16, color: Color(0xFFD97706)),
+                  label: const Text(
+                    'Autres idées',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFD97706),
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
+            // Liste dynamique des 5 suggestions aléatoires
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _quickSuggestions.length,
+              itemCount: _displayedSuggestions.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
-                final item = _quickSuggestions[index];
+                final item = _displayedSuggestions[index];
                 return InkWell(
                   onTap: () {
                     _sendMessage(customPrompt: item['query']);
                   },
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
@@ -646,19 +770,44 @@ class _PocamChatPageState extends State<PocamChatPage>
                     ),
                     child: Row(
                       children: [
-                        Text(item['icon']!, style: const TextStyle(fontSize: 22)),
+                        Text(item['icon']!, style: const TextStyle(fontSize: 20)),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            item['title']!,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textColorPrimary,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['title']!,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textColorPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                item['query']!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey.shade400),
+                        // Bouton d'insertion dans le champ de saisie (pour personnaliser avant d'envoyer)
+                        IconButton(
+                          icon: Icon(Icons.edit_note_rounded, size: 20, color: Colors.grey.shade400),
+                          tooltip: 'Personnaliser avant d\'envoyer',
+                          onPressed: () {
+                            setState(() {
+                              _controller.text = item['query']!;
+                            });
+                          },
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Color(0xFFD97706)),
                       ],
                     ),
                   ),
@@ -673,7 +822,6 @@ class _PocamChatPageState extends State<PocamChatPage>
 
   /// Découpe et met en forme les 3 rubriques juridiques dans des cartes élégantes
   Widget _buildStructuredAiContent(String fullText) {
-    // Normaliser les séparateurs pour la détection
     final textLower = fullText.toLowerCase();
 
     final bool hasSections = textLower.contains('contexte') ||
@@ -689,7 +837,6 @@ class _PocamChatPageState extends State<PocamChatPage>
       );
     }
 
-    // Extraction des 3 blocs
     final List<Widget> sectionWidgets = [];
     final lines = fullText.split('\n');
 
@@ -703,15 +850,15 @@ class _PocamChatPageState extends State<PocamChatPage>
           sectionWidgets.add(_buildSectionBox(
             title: 'RÉFÉRENCE LÉGALE & CADRE JURIDIQUE',
             icon: Icons.gavel_rounded,
-            color: const Color(0xFF1E3A8A), // Bleu Marine profond
-            bgColor: const Color(0xFFEFF6FF), // Fond bleu très doux
+            color: const Color(0xFF1E3A8A),
+            bgColor: const Color(0xFFEFF6FF),
             content: content,
           ));
         } else if (currentSectionType == 'procedure') {
           sectionWidgets.add(_buildSectionBox(
             title: 'PROCÉDURE & DÉMARCHE OPÉRATIONNELLE',
             icon: Icons.checklist_rounded,
-            color: const Color(0xFF0F766E), // Émeraude / Sarcelle institutionnel
+            color: const Color(0xFF0F766E),
             bgColor: const Color(0xFFF0FDFA),
             content: content,
           ));
@@ -719,7 +866,7 @@ class _PocamChatPageState extends State<PocamChatPage>
           sectionWidgets.add(_buildSectionBox(
             title: 'ATTENTION & VIGILANCE DÉONTOLOGIQUE',
             icon: Icons.shield_outlined,
-            color: const Color(0xFFB45309), // Ambre foncé
+            color: const Color(0xFFB45309),
             bgColor: const Color(0xFFFFFBEB),
             content: content,
           ));
@@ -1228,7 +1375,7 @@ class _PocamChatPageState extends State<PocamChatPage>
     );
   }
 
-  /// Indicateur animé de réflexion (3 petits points pulsants)
+  /// Indicateur animé de réflexion
   Widget _buildTypingIndicator() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
@@ -1340,7 +1487,7 @@ class _PocamChatPageState extends State<PocamChatPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Fond gris très clair moderne
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Row(
           children: [
