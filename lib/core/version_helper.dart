@@ -10,8 +10,10 @@ class VersionHelper {
   // Version installée actuellement sur le téléphone du policier
   static const String currentVersion = "1.1.0";
 
-  // Stockage en mémoire de la clé API Gemini récupérée dynamiquement
+  // Stockage en mémoire de la clé API et des modèles Gemini récupérés dynamiquement
   static String geminiApiKey = "";
+  static String geminiModel = "gemini-2.5-flash";
+  static String geminiFallbackModel = "gemini-3.1-flash-lite";
 
   /// Vérifie s'il existe une nouvelle version dans Firestore et affiche le dialogue obligatoire.
   static Future<void> checkVersion(BuildContext context) async {
@@ -30,8 +32,10 @@ class VersionHelper {
       final String latestVersion = data['current_version'] ?? currentVersion;
       final String apkUrl = data['apk_url'] ?? '';
       
-      // Récupérer et stocker la clé API Gemini
+      // Récupérer et stocker la clé API Gemini et modèles
       geminiApiKey = data['gemini_api_key'] ?? '';
+      geminiModel = data['gemini_model'] ?? 'gemini-2.5-flash';
+      geminiFallbackModel = data['gemini_fallback_model'] ?? 'gemini-3.1-flash-lite';
 
       // 2. Comparer la version actuelle et la dernière version
       if (_isVersionNewer(currentVersion, latestVersion) && apkUrl.isNotEmpty) {
